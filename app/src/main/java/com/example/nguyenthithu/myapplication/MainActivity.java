@@ -28,11 +28,13 @@ import java.util.List;
 import java.util.concurrent.Executors;
 
 
-public class MainActivity extends AppCompatActivity implements SerialInputOutputManager.Listener{
+public class MainActivity extends AppCompatActivity {
 
     private TabAdapter adapter;
     private TabLayout tabLayout;
     private ViewPager viewPager;
+    private FragmentStatePagerAdapter mSectionsPagerAdapter;
+    //
     private List<Fragment> mFragmentList = new ArrayList<>();
     private int[] tabIcons = {
             R.mipmap.ic_launcher,
@@ -44,8 +46,7 @@ public class MainActivity extends AppCompatActivity implements SerialInputOutput
     private static final String INTENT_ACTION_GRANT_USB = BuildConfig.APPLICATION_ID + ".GRANT_USB";
     UsbSerialPort port;
     String buffer ="";
-    ///
-    private FragmentStatePagerAdapter mSectionsPagerAdapter;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -84,13 +85,14 @@ public class MainActivity extends AppCompatActivity implements SerialInputOutput
         tabLayout.getTabAt(2).setIcon(R.mipmap.ic_history2);
 
         /// GỬI NHẬN DỮ LIỆU TỪ USB
-        final Button bthuong = findViewById(R.id.button_id);
+       /* final Button bthuong = findViewById(R.id.button_id);
         bthuong.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 // Code here executes on main thread after user presses button
-                openUART("GET_MOISTURE");
+               // openUART("GET_MOISTURE");
             }
         });
+        */
 
 
 
@@ -98,7 +100,7 @@ public class MainActivity extends AppCompatActivity implements SerialInputOutput
     }
     ///gửi nhận data từ microbit
     //NGYAF 17.01.2021
-
+/*
     private void openUART(String temp){
         UsbManager manager = (UsbManager) getSystemService(Context.USB_SERVICE);
         List<UsbSerialDriver> availableDrivers = UsbSerialProber.getDefaultProber().findAllDrivers(manager);
@@ -161,4 +163,5 @@ public class MainActivity extends AppCompatActivity implements SerialInputOutput
     public void onRunError(Exception e) {
 
     }
+    */
 }

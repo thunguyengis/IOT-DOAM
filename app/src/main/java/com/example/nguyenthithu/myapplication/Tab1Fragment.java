@@ -1,7 +1,11 @@
 package com.example.nguyenthithu.myapplication;
 
+import android.app.PendingIntent;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
+import android.hardware.usb.UsbDeviceConnection;
+import android.hardware.usb.UsbManager;
 import android.net.Uri;
 import android.os.Bundle;
 
@@ -12,10 +16,17 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.TextView;
+import android.widget.Toast;
 
 
+import com.hoho.android.usbserial.driver.UsbSerialDriver;
+import com.hoho.android.usbserial.driver.UsbSerialPort;
+import com.hoho.android.usbserial.driver.UsbSerialProber;
+import com.hoho.android.usbserial.util.SerialInputOutputManager;
 import com.jjoe64.graphview.GraphView;
 import com.jjoe64.graphview.series.DataPoint;
 import com.jjoe64.graphview.series.LineGraphSeries;
@@ -28,9 +39,10 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
-
+import java.util.concurrent.Executors;
 
 
 /**
@@ -41,12 +53,17 @@ import java.util.TimerTask;
  * Use the {@link Tab1Fragment#} factory method to
  * create an instance of this fragment.
  */
-public class Tab1Fragment extends Fragment {
+public class Tab1Fragment extends Fragment implements SerialInputOutputManager.Listener{
 
     //biến toàn cục biến trạng thái
     GraphView graphTemperature1;
     GraphView graphTemperature2;
     int counter = 10;
+    // khai báo biến gửi nhận dữ liệu từ USB
+    private static final String ACTION_USB_PERMISSION = "com.android.recipes.USB_PERMISSION";
+    private static final String INTENT_ACTION_GRANT_USB = BuildConfig.APPLICATION_ID + ".GRANT_USB";
+    UsbSerialPort port;
+    String buffer ="";
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -94,6 +111,23 @@ public class Tab1Fragment extends Fragment {
             public void onClick(View view) {
                 //gọi hàm show
                 displayAlertDialog(view.getContext(), " Cảm biên 1","ghi chú");
+            }
+        });
+        /// GỬI NHẬN DỮ LIỆU TỪ USB
+         Button bthuong = view.findViewById(R.id.button_id);
+        bthuong.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                // Code here executes on main thread after user presses button
+                Toast.makeText(getActivity(), "Cancel clicked", Toast.LENGTH_SHORT).show();
+                 openUART(v.getContext(),"GET_MOISTURE");
+            }
+        });
+        // tưới cây
+        Button btn_e = view.findViewById(R.id.graphTemperature_btn);
+        btn_e.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                openUART(v.getContext(),"EXECUTE:1200");
             }
         });
 
@@ -229,7 +263,71 @@ public class Tab1Fragment extends Fragment {
         dialog.show();
     }
 
+    ///gửi nhận data từ microbit
+    //NGYAF 17.01.2021
 
+    private void openUART(Context context, String temp){
+        UsbManager manager = (UsbManager)getActivity().getSystemService(Context.USB_SERVICE);
+        List<UsbSerialDriver> availableDrivers = UsbSerialProber.getDefaultProber().findAllDrivers(manager);
+
+        if (availableDrivers.isEmpty()) {
+            Log.d("UART", "UART is not available");
+
+        }else {
+            Log.d("UART", "UART is available");
+
+            UsbSerialDriver driver = availableDrivers.get(0);
+            UsbDeviceConnection connection = manager.openDevice(driver.getDevice());
+            if (connection == null) {
+
+                PendingIntent usbPermissionIntent = PendingIntent.getBroadcast(context, 0, new Intent(INTENT_ACTION_GRANT_USB), 0);
+                manager.requestPermission(driver.getDevice(), usbPermissionIntent);
+
+                manager.requestPermission(driver.getDevice(), PendingIntent.getBroadcast(context, 0, new Intent(ACTION_USB_PERMISSION), 0));
+
+                return;
+            } else {
+
+                port = driver.getPorts().get(0);
+                try {
+                    port.open(connection);
+                    port.setParameters(115200, 8, UsbSerialPort.STOPBITS_1, UsbSerialPort.PARITY_NONE);
+                    port.write((temp+"#").getBytes(),1000);
+
+//  ngày 21.01.21 nhân dữ liệu từ điện thoại
+                    SerialInputOutputManager usbIoManager = new SerialInputOutputManager(port, this);
+                    Executors.newSingleThreadExecutor().submit(usbIoManager);
+                } catch (Exception e) {
+
+                }
+            }
+        }
+    }
+
+
+    @Override
+    public void onNewData(byte[] data) {
+        buffer += new String(data);
+        Log.d("BUFFER---", buffer);
+        // buffer ="!test A123#";
+        int startIndex = buffer.indexOf("!");
+        int endIndex = buffer.indexOf("#");
+        if (startIndex >= 0 && endIndex >= 0 && endIndex > startIndex) {
+            String value = buffer.substring(startIndex + 1, endIndex);
+            Log.d("VALUE+++", value);
+            //TextView textView = findViewById(R.id.txt_serial_value);
+            //textView.setText(value);
+            buffer = "";
+        }
+        if (buffer.length() >= 256) {
+            buffer = buffer.substring(1);
+        }
+    }
+
+    @Override
+    public void onRunError(Exception e) {
+
+    }
 
     //
 }
