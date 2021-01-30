@@ -1,0 +1,93 @@
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="com.example.nguyenthithu.myapplication.Tab1Fragment">
+
+    <!-- TODO: Update blank fragment layout -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        >
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="5dp"
+            android:orientation="vertical"
+            android:background="@drawable/ic_border">
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_margin="5dp"
+                >
+                <TextView
+                    android:id="@+id/graphTemperatureTitle"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_weight=".8"
+                    android:text="TÊN CẢM BIẾN"
+                    android:textColor="@color/colorPrimary"
+                    android:textSize = "20dp"
+                    android:textStyle="bold"
+                    android:gravity="center"
+                    />
+                <ImageButton
+                    android:id="@+id/btn_edit"
+                    android:layout_width="50dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight=".2"
+                    android:background="#fff"
+                    android:src="@drawable/ic_edit"
+                    android:scaleType="fitCenter"
+                    android:adjustViewBounds="true"
+                   />
+            </LinearLayout>
+
+
+            <com.jjoe64.graphview.GraphView
+                android:id="@+id/graphTemperature1"
+                android:layout_width="match_parent"
+                android:layout_height="150dp"
+                 />
+            <TextView
+                android:id="@+id/graphTemperaturetatus"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:text="trạng thái ....."
+                android:textColor="#FF0000"
+                android:textSize = "20dp"
+                android:textStyle="bold"
+                android:layout_margin="5dp"
+                android:gravity="center"></TextView>
+            <Button
+                android:id="@+id/graphTemperature_btn"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_margin="5dp"
+                android:gravity="center"
+                android:width="50dp"
+                android:height="50dp"
+                android:text="TƯỚI "/>
+            
+
+            <TextView
+                android:id="@+id/graphTemperatureNote"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize = "14dp"
+                android:layout_margin="5dp"
+                android:text="Ghi chú cảm biến"
+                />
+        </LinearLayout>
+
+
+
+        <com.jjoe64.graphview.GraphView
+            android:id="@+id/graphTemperature2"
+            android:layout_width="match_parent"
+            android:layout_height="150dp"
+            android:layout_margin="5dp" />
+    </LinearLayout>
+
+</FrameLayout>
