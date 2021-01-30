@@ -7,8 +7,10 @@ import android.content.Intent;
 import android.hardware.usb.UsbDeviceConnection;
 import android.hardware.usb.UsbManager;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 
+import android.support.annotation.RequiresApi;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.SwitchCompat;
@@ -23,10 +25,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 
-import com.hoho.android.usbserial.driver.UsbSerialDriver;
-import com.hoho.android.usbserial.driver.UsbSerialPort;
-import com.hoho.android.usbserial.driver.UsbSerialProber;
-import com.hoho.android.usbserial.util.SerialInputOutputManager;
+import com.google.gson.Gson;
 import com.jjoe64.graphview.GraphView;
 import com.jjoe64.graphview.series.DataPoint;
 import com.jjoe64.graphview.series.LineGraphSeries;
@@ -39,10 +38,12 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.concurrent.Executors;
+
+import lombok.Data;
 
 
 /**
@@ -53,7 +54,7 @@ import java.util.concurrent.Executors;
  * Use the {@link Tab1Fragment#} factory method to
  * create an instance of this fragment.
  */
-public class Tab1Fragment extends Fragment implements SerialInputOutputManager.Listener{
+public class Tab1Fragment extends Fragment {
 
     //biến toàn cục biến trạng thái
     GraphView graphTemperature1;
@@ -62,31 +63,31 @@ public class Tab1Fragment extends Fragment implements SerialInputOutputManager.L
     // khai báo biến gửi nhận dữ liệu từ USB
     private static final String ACTION_USB_PERMISSION = "com.android.recipes.USB_PERMISSION";
     private static final String INTENT_ACTION_GRANT_USB = BuildConfig.APPLICATION_ID + ".GRANT_USB";
-    UsbSerialPort port;
+//    UsbSerialPort port;
     String buffer ="";
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 
         View view = inflater.inflate(R.layout.fragment_one, container, false);
-       // ImageView imageView = (ImageView) view.findViewById(R.id.my_image);
+        // ImageView imageView = (ImageView) view.findViewById(R.id.my_image);
 
-         /* ngày 12.01.2021 */
-        Timer aTimer = new Timer();
-        TimerTask aTask =new TimerTask() {
-            @Override
-            public void run() {
-                sendDataToThingSpeak("12",counter+"");
-                // getDataToThingSpeak();
-                counter = counter +1;
-                if(counter >=20) counter =10;
-            }
-        };
+        /* ngày 12.01.2021 */
+//        Timer aTimer = new Timer();
+//        TimerTask aTask = new TimerTask() {
+//            @Override
+//            public void run() {
+//                sendDataToThingSpeak("12", counter + "");
+//                // getDataToThingSpeak();
+//                counter = counter + 1;
+//                if (counter >= 20) counter = 10;
+//            }
+//        };
 
-        aTimer.schedule(aTask, 30000, 60000);
+//        aTimer.schedule(aTask, 30000, 60000);
 
 
-          /* ngày 14.01.2021 thiết kế giao */
+        /* ngày 14.01.2021 thiết kế giao */
         graphTemperature1 = view.findViewById(R.id.graphTemperature1);
         graphTemperature2 = view.findViewById(R.id.graphTemperature2);
 
@@ -99,7 +100,7 @@ public class Tab1Fragment extends Fragment implements SerialInputOutputManager.L
 
         LineGraphSeries<DataPoint> seriesTemp = new LineGraphSeries<>(dataPointTemp);
         //show dư liêụ trên grag
-         showDataOnGraph(seriesTemp, graphTemperature1);
+        showDataOnGraph(seriesTemp, graphTemperature1);
 
         //lấy dữ liệu từ server
         setupBlinkyTimer();
@@ -110,40 +111,40 @@ public class Tab1Fragment extends Fragment implements SerialInputOutputManager.L
             @Override
             public void onClick(View view) {
                 //gọi hàm show
-                displayAlertDialog(view.getContext(), " Cảm biên 1","ghi chú");
+                displayAlertDialog(view.getContext(), " Cảm biên 1", "ghi chú");
             }
         });
         /// GỬI NHẬN DỮ LIỆU TỪ USB
-         Button bthuong = view.findViewById(R.id.button_id);
-        bthuong.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-                // Code here executes on main thread after user presses button
-                Toast.makeText(getActivity(), "Cancel clicked", Toast.LENGTH_SHORT).show();
-                 openUART(v.getContext(),"GET_MOISTURE");
-            }
-        });
+//         Button bthuong = view.findViewById(R.id.button_id);
+//        bthuong.setOnClickListener(new View.OnClickListener() {
+//            public void onClick(View v) {
+//                // Code here executes on main thread after user presses button
+//                Toast.makeText(getActivity(), "Cancel clicked", Toast.LENGTH_SHORT).show();
+//                 openUART(v.getContext(),"GET_MOISTURE");
+//            }
+//        });
         // tưới cây
-        Button btn_e = view.findViewById(R.id.graphTemperature_btn);
-        btn_e.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                openUART(v.getContext(),"EXECUTE:1200");
-            }
-        });
+//        Button btn_e = view.findViewById(R.id.graphTemperature_btn);
+//        btn_e.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
+//                openUART(v.getContext(),"EXECUTE:1200");
+//            }
+//        });
 
 
         //======================================================================================
-       return view;
+        return view;
     }//</**********************************************************>
 
-    private void sendDataToThingSpeak(String ID, String value){
+    private void sendDataToThingSpeak(String ID, String value) {
         OkHttpClient okHttpClient = new OkHttpClient();
         Request.Builder builder = new Request.Builder();
 
         String apiURL = "https://api.thingspeak.com/update?api_key=2QCJ81R498BZNB52&field1"
-                +  "=" + value;
+                + "=" + value;
 
-        Log.d("sendDataToThingSpeak","apiURL");
+        Log.d("sendDataToThingSpeak", "apiURL");
         Request request = builder.url(apiURL).build();
         okHttpClient.newCall(request).enqueue(new Callback() {
             @Override
@@ -157,73 +158,76 @@ public class Tab1Fragment extends Fragment implements SerialInputOutputManager.L
             }
         });
     }
+
     // ngày 14.01.21
-    private void getDataToThingSpeak(){
-        OkHttpClient okHttpClient = new OkHttpClient();
-        Request.Builder builder = new Request.Builder();
+//    private void getDataToThingSpeak() {
+//        OkHttpClient okHttpClient = new OkHttpClient();
+//        Request.Builder builder = new Request.Builder();
+//
+//        String apiURL = "https://api.thingspeak.com/channels/1280928/feeds.json?results=5";
+//
+//        Log.d("apiURL:  ", apiURL);
+//        Request request = builder.url(apiURL).build();
+//
+//        okHttpClient.newCall(request).enqueue(new Callback() {
+//            @Override
+//            public void onFailure(Request request, IOException e) {
+//                Log.d("ABC", e.getMessage());
+//            }
+//
+//            @Override
+//            public void onResponse(Response response) throws IOException {
+//
+//                String jsonString = response.body().string();
+//                try {
+//                    JSONObject jsonData = new JSONObject(jsonString);
+//                    JSONArray jsonArray = jsonData.getJSONArray("feeds");
+//                    double temp0 = jsonArray.getJSONObject(0).getDouble("field1");
+//                    double temp1 = jsonArray.getJSONObject(1).getDouble("field1");
+//                    double temp2 = jsonArray.getJSONObject(2).getDouble("field1");
+//                    double temp3 = jsonArray.getJSONObject(3).getDouble("field1");
+//                    double temp4 = jsonArray.getJSONObject(4).getDouble("field1");
+//
+//                    LineGraphSeries<DataPoint> seriesTemp = new LineGraphSeries<>(new DataPoint[]
+//                            {new DataPoint(0, temp0),
+//                                    new DataPoint(1, temp1),
+//                                    new DataPoint(2, temp2),
+//                                    new DataPoint(3, temp3),
+//                                    new DataPoint(4, temp4)
+//                            });
+//
+//                    showDataOnGraph(seriesTemp, graphTemperature1);
+//                    showDataOnGraph(seriesTemp, graphTemperature2);
+//
+//                } catch (Exception e) {
+//                }
+//            }
+//        });
+//
+//    }
 
-        String apiURL = "https://api.thingspeak.com/channels/1280928/feeds.json?results=5";
-
-        Log.d("apiURL:  ",apiURL);
-        Request request = builder.url(apiURL).build();
-
-        okHttpClient.newCall(request).enqueue(new Callback() {
-            @Override
-            public void onFailure(Request request, IOException e) {
-                Log.d("ABC",e.getMessage());
-            }
-
-            @Override
-            public void onResponse(Response response) throws IOException {
-
-                String jsonString = response.body().string();
-                try{
-                    JSONObject jsonData = new JSONObject(jsonString);
-                    JSONArray jsonArray = jsonData.getJSONArray("feeds");
-                    double temp0 = jsonArray.getJSONObject(0).getDouble("field1");
-                    double temp1 = jsonArray.getJSONObject(1).getDouble("field1");
-                    double temp2 = jsonArray.getJSONObject(2).getDouble("field1");
-                    double temp3 = jsonArray.getJSONObject(3).getDouble("field1");
-                    double temp4 = jsonArray.getJSONObject(4).getDouble("field1");
-
-                    LineGraphSeries<DataPoint> seriesTemp = new LineGraphSeries<>(new DataPoint[]
-                            {   new DataPoint(0, temp0),
-                                    new DataPoint(1, temp1),
-                                    new DataPoint(2, temp2),
-                                    new DataPoint(3, temp3),
-                                    new DataPoint(4, temp4)
-                            });
-
-                    showDataOnGraph(seriesTemp, graphTemperature1);
-                    showDataOnGraph(seriesTemp, graphTemperature2);
-
-                }catch (Exception e){}
-            }
-        });
-
-    }
-    private void setupBlinkyTimer(){
+    private void setupBlinkyTimer() {
         Timer mTimer = new Timer();
         TimerTask mTask = new TimerTask() {
             @Override
             public void run() {
-                getDataToThingSpeak();
+                getSensorDataFromServer();
             }
         };
         mTimer.schedule(mTask, 2000, 5000);
     }
 
-    private void showDataOnGraph(LineGraphSeries<DataPoint> series, GraphView graph){
-        if(graph.getSeries().size() > 0){
+    private void showDataOnGraph(LineGraphSeries<DataPoint> series, GraphView graph) {
+        if (graph.getSeries().size() > 0) {
             graph.getSeries().remove(0);
         }
         graph.addSeries(series);
         series.setDrawDataPoints(true);
-        series.setDataPointsRadius(10);
     }
+
     // ngày 17.01.21
     // chỉnh sửa thông tin của sensor
-    public void displayAlertDialog(Context activity, String str_NameSensor, String str_Note ) {
+    public void displayAlertDialog(Context activity, String str_NameSensor, String str_Note) {
         LayoutInflater inflater = getLayoutInflater();
         View alertLayout = inflater.inflate(R.layout.one_dialog, null);
         //
@@ -263,70 +267,59 @@ public class Tab1Fragment extends Fragment implements SerialInputOutputManager.L
         dialog.show();
     }
 
-    ///gửi nhận data từ microbit
-    //NGYAF 17.01.2021
+    private void getSensorDataFromServer() {
+        OkHttpClient okHttpClient = new OkHttpClient();
+        Request.Builder builder = new Request.Builder();
 
-    private void openUART(Context context, String temp){
-        UsbManager manager = (UsbManager)getActivity().getSystemService(Context.USB_SERVICE);
-        List<UsbSerialDriver> availableDrivers = UsbSerialProber.getDefaultProber().findAllDrivers(manager);
+        String apiURL = "http://192.168.2.126:8080/sensorData";
 
-        if (availableDrivers.isEmpty()) {
-            Log.d("UART", "UART is not available");
+        Log.d("apiURL:  ", apiURL);
+        Request request = builder.url(apiURL).build();
 
-        }else {
-            Log.d("UART", "UART is available");
+        okHttpClient.newCall(request).enqueue(new Callback() {
+            @Override
+            public void onFailure(Request request, IOException e) {
+                Log.d("ABC", e.getMessage());
+            }
 
-            UsbSerialDriver driver = availableDrivers.get(0);
-            UsbDeviceConnection connection = manager.openDevice(driver.getDevice());
-            if (connection == null) {
+            @RequiresApi(api = Build.VERSION_CODES.N)
+            @Override
+            public void onResponse(Response response) throws IOException {
 
-                PendingIntent usbPermissionIntent = PendingIntent.getBroadcast(context, 0, new Intent(INTENT_ACTION_GRANT_USB), 0);
-                manager.requestPermission(driver.getDevice(), usbPermissionIntent);
+                String jsonString = response.body().string();
 
-                manager.requestPermission(driver.getDevice(), PendingIntent.getBroadcast(context, 0, new Intent(ACTION_USB_PERMISSION), 0));
-
-                return;
-            } else {
-
-                port = driver.getPorts().get(0);
+                Gson gson = new Gson();
+                GetSensorData getSensorData = gson.fromJson(jsonString, GetSensorData.class);
+                List<GetSensorDataData> getSensorDataDataList = getSensorData.getData();
                 try {
-                    port.open(connection);
-                    port.setParameters(115200, 8, UsbSerialPort.STOPBITS_1, UsbSerialPort.PARITY_NONE);
-                    port.write((temp+"#").getBytes(),1000);
-
-//  ngày 21.01.21 nhân dữ liệu từ điện thoại
-                    SerialInputOutputManager usbIoManager = new SerialInputOutputManager(port, this);
-                    Executors.newSingleThreadExecutor().submit(usbIoManager);
+                    LineGraphSeries<DataPoint> seriesTemp = new LineGraphSeries<>(new DataPoint[]
+                            {new DataPoint(0, Double.parseDouble(getSensorDataDataList.get(4).getSensorValue())),
+                                    new DataPoint(1, Double.parseDouble(getSensorDataDataList.get(3).getSensorValue())),
+                                    new DataPoint(2, Double.parseDouble(getSensorDataDataList.get(2).getSensorValue())),
+                                    new DataPoint(3, Double.parseDouble(getSensorDataDataList.get(1).getSensorValue())),
+                                    new DataPoint(4, Double.parseDouble(getSensorDataDataList.get(0).getSensorValue()))
+                            });
+                    showDataOnGraph(seriesTemp, graphTemperature1);
                 } catch (Exception e) {
-
                 }
             }
-        }
+        });
+
     }
 
 
-    @Override
-    public void onNewData(byte[] data) {
-        buffer += new String(data);
-        Log.d("BUFFER---", buffer);
-        // buffer ="!test A123#";
-        int startIndex = buffer.indexOf("!");
-        int endIndex = buffer.indexOf("#");
-        if (startIndex >= 0 && endIndex >= 0 && endIndex > startIndex) {
-            String value = buffer.substring(startIndex + 1, endIndex);
-            Log.d("VALUE+++", value);
-            //TextView textView = findViewById(R.id.txt_serial_value);
-            //textView.setText(value);
-            buffer = "";
-        }
-        if (buffer.length() >= 256) {
-            buffer = buffer.substring(1);
-        }
+    @Data
+    private static final class GetSensorData {
+        private String code;
+        private String message;
+        private List<GetSensorDataData> data;
     }
 
-    @Override
-    public void onRunError(Exception e) {
-
+    @Data
+    private static final class GetSensorDataData {
+        private String sensorId;
+        private String sensorValue;
+        private String measureTime;
     }
 
     //
